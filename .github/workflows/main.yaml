@@ -4,37 +4,36 @@ on: [push, pull_request]
 jobs:
   build:
     env:
-      FC: gfortran-9
       VERBOSE: 1
     strategy:
       matrix:
-        os: ['ubuntu-20.04']
-        mpi: ['openmpi']
-        #os: ['ubuntu-20.04', 'macos-10.15']
-        #mpi: ['openmpi', 'mpich']
-        #exclude:
-        #  - os: 'macos-10.15'
-        #    mpi: 'openmpi'
+        os: ['ubuntu-20.04', 'macos-10.15']
+        mpi: ['openmpi', 'mpich']
+        exclude:
+          - os: 'macos-10.15'
+            mpi: 'openmpi'
     runs-on: ${{ matrix.os }}
 
     steps:
 
     - name: Install dependencies (Linux & OpenMPI)
+      if: matrix.os == 'ubuntu-20.04' && matrix.mpi == 'openmpi'
       run: |
         sudo apt-get update
         sudo apt-get install openmpi-bin libopenmpi-dev
-      if: matrix.os == 'ubuntu-20.04' && matrix.mpi == 'openmpi'
 
     - name: Install dependencies (Linux & MPICH)
+      if: matrix.os == 'ubuntu-20.04' && matrix.mpi == 'mpich'
       run: |
         sudo apt-get update
         sudo apt-get install libmpich-dev
-      if: matrix.os == 'ubuntu-20.04' && matrix.mpi == 'mpich'
 
     - name: Install dependencies (macOS & MPICH)
-      run: |
-        brew install mpich
       if: matrix.os == 'macos-10.15' && matrix.mpi == 'mpich'
+      run: |
+        ln -s /usr/local/bin/gcc-9      /usr/local/bin/gcc
+        ln -s /usr/local/bin/g++-9      /usr/local/bin/g++
+        ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
 
     - name: Get Sources
       uses: actions/checkout@v2
@@ -43,19 +42,31 @@ jobs:
         submodules: true
 
     - name: Build (Linux)
+      if: matrix.os == 'ubuntu-20.04'
       run: |
         cd ${{ matrix.os }}-${{ matrix.mpi }}
         prefix=$GITHUB_WORKSPACE/install-${{ matrix.os }}-${{ matrix.mpi }}
         export PATH="$prefix/bin:$PATH"
         export LD_LIBRARY_PATH="$prefix/lib:$LD_LIBRARY_PATH"
+        if [[ ${{ matrix.mpi }} == mpich ]]; then
+           mpi_ver=$( mpiexec --version | grep Version | awk '{ print $2 }' )
+        elif [[ ${{ matrix.mpi }} == openmpi ]]; then
+           mpi_ver=$( mpiexec --version | grep OpenRTE | awk '{ print $3 }' )
+        fi
+        export HPC_MPI="${{ matrix.mpi }}/${mpi_ver}"
         ./build_stack.sh -p $prefix -c config/config_custom.sh -y config/stack_custom.yaml
-      if: matrix.os == 'ubuntu-20.04'
 
     - name: Build (macOS)
+      if: matrix.os == 'macos-10.15'
       run: |
         cd ${{ matrix.os }}-${{ matrix.mpi }}
         prefix=$GITHUB_WORKSPACE/install-${{ matrix.os }}-${{ matrix.mpi }}
         export PATH="$prefix/bin:$PATH"
         export LD_LIBRARY_PATH="$prefix/lib:$LD_LIBRARY_PATH"
+        export CC=/usr/local/bin/gcc
+        export CXX=/usr/local/bin/g++
+        export FC=/usr/local/bin/gfortran
+        export SERIAL_CC=${CC}
+        export SERIAL_CXX=${CXX}
+        export SERIAL_FC=${FC}
         ./build_stack.sh -p $prefix -c config/config_mac.sh -y config/stack_mac.yaml
-      if: matrix.os == 'macos-10.15'

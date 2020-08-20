@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Compiler/MPI combination
-export HPC_COMPILER="clang/11.0.3"
-export HPC_MPI="mpich/3.3.1"
+export HPC_COMPILER="${HPC_COMPILER:-gcc/9.3.0}"
+export HPC_MPI="${HPC_MPI:-mpich/3.3.1}"
 
 # Build options
 export USE_SUDO=N
@@ -16,5 +16,3 @@ export   MAKE_CLEAN=N
 export DOWNLOAD_ONLY=N
 export STACK_EXIT_ON_FAIL=Y
 export WGET="wget -nv"
-
-export SERIAL_FC=gfortran-9

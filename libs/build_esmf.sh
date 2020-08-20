@@ -83,9 +83,11 @@ case $COMPILER in
     ;;
   gnu|gcc )
     export ESMF_COMPILER="gfortran"
+    export ESMF_F90COMPILEOPTS="${FFLAGS}"
     ;;
   clang )
     export ESMF_COMPILER="gfortranclang"
+    export ESMF_F90COMPILEOPTS="${FFLAGS}"
     ;;
   * )
     echo "Unsupported compiler = $COMPILER, ABORT!"; exit 1
