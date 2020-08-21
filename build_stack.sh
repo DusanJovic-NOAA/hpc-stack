@@ -116,11 +116,6 @@ else
   set_pkg_root
 fi
 
-echo "\$SERIAL_CC \$SERIAL_CXX \$SERIAL_FC"
-$SERIAL_CC --version
-$SERIAL_CXX --version
-$SERIAL_FC --version
-
 # ==============================================================================
 #----------------------
 # Compiler and MPI
@@ -128,11 +123,6 @@ build_lib gnu
 $MODULES || { [[ ${STACK_gnu_build:-} =~ [yYtT] ]] && export PATH="$PREFIX/bin:$PATH"; }
 build_lib mpi
 $MODULES || { [[ ${STACK_mpi_build:-} =~ [yYtT] ]] && export PATH="$PREFIX/bin:$PATH"; }
-
-echo "\$MPI_CC \$MPI_CXX \$MPI_FC"
-$MPI_CC --version
-$MPI_CXX --version
-$MPI_FC --version
 
 # ==============================================================================
 #----------------------
